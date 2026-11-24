@@ -1,0 +1,2450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>LET'S PLAY WITH JIHAN! — Adventure & Survival</title>
+  <!-- Google Fonts for Adventure Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-sky-top: #0f4c5c;
+      --bg-sky-bot: #2ec4b6;
+      --panel-bg: rgba(17, 34, 48, 0.92);
+      --panel-border: #38bdf8;
+      --accent-gold: #fbbf24;
+      --accent-gold-dark: #d97706;
+      --accent-emerald: #10b981;
+      --accent-emerald-dark: #059669;
+      --accent-coral: #f43f5e;
+      --text-light: #f8fafc;
+      --text-muted: #cbd5e1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #0b192c;
+      color: var(--text-light);
+    }
+
+    h1, h2, h3, .game-font {
+      font-family: 'Fredoka', sans-serif;
+      letter-spacing: 0.02em;
+    }
+
+    /* Main Container */
+    #app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Fullscreen Interactive Canvas */
+    #gameCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+    }
+
+    /* Screen Overlay System */
+    .screen {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .screen.hidden {
+      display: none !important;
+    }
+
+    /* Glass Adventure Card */
+    .adventure-card {
+      background: var(--panel-bg);
+      border: 3px solid rgba(251, 191, 36, 0.7);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 0 24px rgba(56, 189, 248, 0.15);
+      border-radius: 24px;
+      padding: 28px 32px;
+      width: 100%;
+      max-width: 540px;
+      max-height: 92vh;
+      overflow-y: auto;
+      backdrop-filter: blur(10px);
+      text-align: center;
+    }
+
+    .adventure-card.wide {
+      max-width: 680px;
+    }
+
+    /* Scrollbar styling for modals */
+    .adventure-card::-webkit-scrollbar {
+      width: 6px;
+    }
+    .adventure-card::-webkit-scrollbar-thumb {
+      background: rgba(251, 191, 36, 0.5);
+      border-radius: 99px;
+    }
+
+    /* Title Styling */
+    .hero-title {
+      font-size: clamp(2.1rem, 6vw, 4.2rem);
+      font-weight: 700;
+      color: #fde047;
+      text-shadow:
+        0 4px 0 #b45309,
+        0 8px 0 #78350f,
+        0 14px 28px rgba(0, 0, 0, 0.65);
+      line-height: 1.1;
+      margin-bottom: 12px;
+      animation: floatTitle 3s ease-in-out infinite;
+    }
+
+    @keyframes floatTitle {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .hero-subtitle {
+      display: inline-block;
+      background: rgba(15, 23, 42, 0.75);
+      border: 2px solid #38bdf8;
+      color: #e0f2fe;
+      padding: 8px 20px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: clamp(0.85rem, 2vw, 1.05rem);
+      margin-bottom: 28px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+    }
+
+    /* 3D Juicy Adventure Buttons */
+    .btn {
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 600;
+      font-size: 1.05rem;
+      border: none;
+      border-radius: 16px;
+      padding: 13px 24px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: transform 0.12s ease, filter 0.15s ease, box-shadow 0.12s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .btn:hover {
+      filter: brightness(1.08);
+      transform: translateY(-2px);
+    }
+
+    .btn:active {
+      transform: translateY(3px);
+    }
+
+    .btn-gold {
+      background: linear-gradient(180deg, #fde047 0%, #f59e0b 100%);
+      color: #451a03;
+      box-shadow: 0 5px 0 #b45309, 0 10px 20px rgba(0, 0, 0, 0.4);
+    }
+    .btn-gold:active {
+      box-shadow: 0 2px 0 #b45309;
+    }
+
+    .btn-emerald {
+      background: linear-gradient(180deg, #34d399 0%, #059669 100%);
+      color: #ffffff;
+      box-shadow: 0 5px 0 #065f46, 0 10px 20px rgba(0, 0, 0, 0.4);
+    }
+    .btn-emerald:active {
+      box-shadow: 0 2px 0 #065f46;
+    }
+
+    .btn-sky {
+      background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+      color: #ffffff;
+      box-shadow: 0 5px 0 #075985, 0 10px 20px rgba(0, 0, 0, 0.4);
+    }
+    .btn-sky:active {
+      box-shadow: 0 2px 0 #075985;
+    }
+
+    .btn-coral {
+      background: linear-gradient(180deg, #fb7185 0%, #e11d48 100%);
+      color: #ffffff;
+      box-shadow: 0 5px 0 #9f1239, 0 10px 20px rgba(0, 0, 0, 0.4);
+    }
+    .btn-coral:active {
+      box-shadow: 0 2px 0 #9f1239;
+    }
+
+    .btn-slate {
+      background: linear-gradient(180deg, #475569 0%, #334155 100%);
+      color: #f8fafc;
+      box-shadow: 0 5px 0 #1e293b, 0 8px 16px rgba(0, 0, 0, 0.35);
+    }
+
+    .btn-lg {
+      font-size: 1.35rem;
+      padding: 16px 40px;
+      border-radius: 20px;
+    }
+
+    .menu-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      margin-top: 16px;
+    }
+
+    /* Form Controls */
+    .form-group {
+      text-align: left;
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #fde047;
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 13px 16px;
+      border-radius: 14px;
+      border: 2px solid #38bdf8;
+      background: rgba(15, 23, 42, 0.85);
+      color: #ffffff;
+      font-size: 1rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: #fbbf24;
+      box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.25);
+    }
+
+    .warning-banner {
+      background: rgba(244, 63, 94, 0.2);
+      border: 2px solid #f43f5e;
+      color: #fecdd3;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .welcome-banner {
+      background: rgba(16, 185, 129, 0.2);
+      border: 2px solid #10b981;
+      color: #a7f3d0;
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-top: 14px;
+    }
+
+    /* Gameplay HUD */
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 8;
+      padding: 10px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    #hud.hidden {
+      display: none !important;
+    }
+
+    .hud-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .hud-pill {
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px solid rgba(56, 189, 248, 0.55);
+      border-radius: 14px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+      backdrop-filter: blur(6px);
+    }
+
+    .hud-pill.gold {
+      border-color: rgba(251, 191, 36, 0.75);
+      color: #fde047;
+    }
+
+    .hud-btn {
+      background: rgba(15, 23, 42, 0.9);
+      border: 2px solid #fbbf24;
+      color: #fde047;
+      border-radius: 12px;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    .hud-btn:hover {
+      background: rgba(30, 41, 59, 0.95);
+    }
+
+    /* On-Screen Touch / Fallback Controls */
+    #touchControls {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      right: 14px;
+      z-index: 8;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      pointer-events: none;
+    }
+
+    #touchControls.hidden {
+      display: none !important;
+    }
+
+    .touch-cluster {
+      display: flex;
+      gap: 12px;
+      pointer-events: auto;
+    }
+
+    .touch-pad-btn {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      background: rgba(15, 23, 42, 0.72);
+      border: 2px solid rgba(251, 191, 36, 0.75);
+      color: #fde047;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .touch-pad-btn:active, .touch-pad-btn.active {
+      background: rgba(251, 191, 36, 0.35);
+      transform: scale(0.94);
+    }
+
+    /* Quiz Options */
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .quiz-option-btn {
+      width: 100%;
+      text-align: left;
+      padding: 14px 18px;
+      border-radius: 14px;
+      background: rgba(30, 41, 59, 0.9);
+      border: 2px solid #38bdf8;
+      color: #f8fafc;
+      font-size: 0.98rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .quiz-option-btn:hover {
+      background: rgba(56, 189, 248, 0.22);
+      border-color: #fbbf24;
+      transform: translateX(4px);
+    }
+
+    .quiz-letter {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: #0284c7;
+      color: #fff;
+      font-family: 'Fredoka', sans-serif;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* Code Box for MakeCode */
+    .code-box {
+      background: #090d16;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: left;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.78rem;
+      color: #38bdf8;
+      overflow-x: auto;
+      max-height: 170px;
+      margin-top: 10px;
+      white-space: pre;
+    }
+
+    /* Stage Toast Banner */
+    #stageToast {
+      position: absolute;
+      top: 66px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9;
+      background: rgba(15, 23, 42, 0.9);
+      border: 2px solid #fbbf24;
+      color: #fde047;
+      padding: 8px 20px;
+      border-radius: 999px;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 1rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    #stageToast.hidden {
+      opacity: 0;
+    }
+
+    /* Stats Grid on Victory Screen */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin: 16px 0;
+      text-align: left;
+    }
+
+    .stat-box {
+      background: rgba(15, 23, 42, 0.78);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 14px;
+      padding: 10px 14px;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .stat-value {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 1.15rem;
+      color: #f8fafc;
+      margin-top: 2px;
+    }
+
+    .rank-badge {
+      display: inline-block;
+      background: linear-gradient(90deg, #f59e0b, #fde047, #f59e0b);
+      color: #451a03;
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 700;
+      font-size: 1.2rem;
+      padding: 8px 22px;
+      border-radius: 999px;
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+      margin: 8px 0;
+    }
+
+    @media (max-width: 600px) {
+      .adventure-card {
+        padding: 20px 18px;
+      }
+      .hud-pill {
+        padding: 5px 8px;
+        font-size: 0.75rem;
+      }
+      .touch-pad-btn {
+        width: 52px;
+        height: 52px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Main 2D Adventure Canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Floating Stage Notification Toast -->
+    <div id="stageToast" class="hidden">Stage 1: The Forest</div>
+
+    <!-- Top Gameplay HUD -->
+    <div id="hud" class="hidden">
+      <div class="hud-group">
+        <div class="hud-pill" id="hudPlayer">🧭 Explorer (Class)</div>
+        <div class="hud-pill" id="hudLives">❤️❤️❤️</div>
+        <div class="hud-pill gold" id="hudStage">Stage 1/5</div>
+      </div>
+      <div class="hud-group">
+        <div class="hud-pill gold" id="hudCoins">🪙 0</div>
+        <div class="hud-pill" id="hudKeys">🔑 0/3</div>
+        <div class="hud-pill" id="hudScore">⭐ 0</div>
+        <div class="hud-pill" id="hudTimer">⏱️ 00:00</div>
+        <button class="hud-btn" id="hudMusicBtn" title="Toggle Music">🎵 ON</button>
+        <button class="hud-btn" id="hudMenuBtn" title="Pause / Menu">☰</button>
+      </div>
+    </div>
+
+    <!-- Mobile / Touch / Quick Action Controls -->
+    <div id="touchControls" class="hidden">
+      <div class="touch-cluster">
+        <button class="touch-pad-btn" id="btnTouchLeft" aria-label="Move Left">◀</button>
+        <button class="touch-pad-btn" id="btnTouchRight" aria-label="Move Right">▶</button>
+      </div>
+      <div class="touch-cluster">
+        <button class="touch-pad-btn" id="btnTouchShake" title="Micro:bit Shake / Boost" aria-label="Special Shake Boost">⚡</button>
+        <button class="touch-pad-btn" id="btnTouchJump" aria-label="Jump">▲</button>
+      </div>
+    </div>
+
+    <!-- 1. OPENING SCREEN -->
+    <section id="screenOpening" class="screen">
+      <div style="text-align: center; max-width: 780px; padding: 16px;">
+        <div class="hero-subtitle">🏝️ MYSTERIOUS ISLAND INFORMATICS EXPEDITION</div>
+        <h1 class="hero-title">LET'S PLAY WITH JIHAN!</h1>
+        <p style="color: #f1f5f9; font-size: clamp(0.95rem, 2.2vw, 1.15rem); font-weight: 600; text-shadow: 0 2px 8px rgba(0,0,0,0.7); max-width: 560px; margin: 0 auto 28px;">
+          Survive the wild island, collect ancient keys, and solve Informatics puzzles to unlock your escape!
+        </p>
+        <button id="btnOpeningPlay" class="btn btn-gold btn-lg">▶ PLAY ADVENTURE</button>
+      </div>
+    </section>
+
+    <!-- 2. PLAYER REGISTRATION SCREEN -->
+    <section id="screenRegister" class="screen hidden">
+      <div class="adventure-card">
+        <h2 style="font-size: 1.85rem; color: #fde047; margin-bottom: 6px;">🧭 EXPLORER REGISTRATION</h2>
+        <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 18px;">
+          Enter your identity before embarking on the island expedition!
+        </p>
+
+        <div id="regWarning" class="warning-banner hidden">
+          ⚠️ Please fill in both your Full Name and Class before continuing!
+        </div>
+
+        <form id="registerForm" novalidate>
+          <div class="form-group">
+            <label for="inputName">Nama Lengkap (Full Name)</label>
+            <input type="text" id="inputName" class="form-input" placeholder="e.g., Jihan Aulia Putri" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label for="inputClass">Kelas (Class)</label>
+            <input type="text" id="inputClass" class="form-input" placeholder="e.g., VII-A / 8B / X-IPA 1" autocomplete="off" />
+          </div>
+          <button type="submit" id="btnSubmitReg" class="btn btn-emerald" style="width: 100%; margin-top: 6px;">
+            ✅ SUBMIT / MULAI
+          </button>
+        </form>
+
+        <div id="regSuccessBox" class="hidden">
+          <div class="welcome-banner" id="welcomeText">
+            Welcome, Explorer! Ready for an adventure?
+          </div>
+          <button id="btnGoMainMenu" class="btn btn-gold" style="width: 100%; margin-top: 14px;">
+            🏝️ CONTINUE TO MAIN MENU
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. MAIN MENU SCREEN -->
+    <section id="screenMenu" class="screen hidden">
+      <div class="adventure-card">
+        <div style="font-size: 0.85rem; font-weight: 700; color: #38bdf8; margin-bottom: 4px;" id="menuPlayerBadge">
+          EXPLORER: JIHAN • CLASS: VII-A
+        </div>
+        <h2 style="font-size: 2rem; color: #fde047; margin-bottom: 4px;">LET'S PLAY WITH JIHAN!</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Choose your action below</p>
+
+        <div class="menu-stack">
+          <button id="btnMenuStart" class="btn btn-emerald">🚀 START GAME</button>
+          <button id="btnMenuMicrobit" class="btn btn-sky">
+            📡 MICRO:BIT CONNECTION <span id="menuMbStatusDot" style="font-size: 0.8rem; background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 99px;">OFFLINE</span>
+          </button>
+          <button id="btnMenuHowTo" class="btn btn-gold">📖 HOW TO PLAY</button>
+          <button id="btnMenuSettings" class="btn btn-slate">⚙️ SETTINGS</button>
+          <button id="btnMenuMusic" class="btn btn-slate">🎵 MUSIC: ON</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. STORY INTRODUCTION SCREEN -->
+    <section id="screenStory" class="screen hidden">
+      <div class="adventure-card wide">
+        <div style="font-size: 2.5rem; margin-bottom: 6px;">🏝️🧭📜</div>
+        <h2 style="font-size: 1.85rem; color: #fde047; margin-bottom: 12px;">THE MYSTERIOUS ISLAND</h2>
+        <p style="color: #e2e8f0; font-size: 1.02rem; line-height: 1.65; margin-bottom: 16px;">
+          During an expedition across uncharted waters, a sudden storm strands <strong style="color: #fde047;" id="storyPlayerName">you</strong> on a mysterious island filled with ancient technology!
+        </p>
+        <p style="color: #cbd5e1; font-size: 0.96rem; line-height: 1.6; margin-bottom: 20px;">
+          To escape, you must survive <strong style="color: #34d399;">5 perilous stages</strong> — traversing the dense Forest, crossing the rushing River, braving the Dark Cave, unlocking the Computer Temple, and conquering the Final Gate by answering <strong style="color: #38bdf8;">Informatics challenges</strong>!
+        </p>
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+          <button id="btnStoryBack" class="btn btn-slate">← BACK</button>
+          <button id="btnStoryBegin" class="btn btn-gold">⚔️ BEGIN EXPEDITION!</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. MICRO:BIT CONNECTION MODAL -->
+    <section id="screenMicrobit" class="screen hidden">
+      <div class="adventure-card wide">
+        <h2 style="font-size: 1.7rem; color: #38bdf8; margin-bottom: 6px;">📡 BBC MICRO:BIT CONNECTION</h2>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 14px;">
+          Connect via Web Bluetooth (Nordic UART Service). Keyboard controls remain active anytime!
+        </p>
+
+        <div id="mbStatusBox" style="background: rgba(15,23,42,0.85); border: 2px solid #475569; border-radius: 14px; padding: 12px; margin-bottom: 14px;">
+          <div style="font-weight: 700; font-size: 0.95rem;" id="mbStatusText">Status: Disconnected 🔴</div>
+          <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;" id="mbLastInput">Last Signal: None</div>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px;">
+          <button id="btnMbConnect" class="btn btn-emerald">🔗 CONNECT</button>
+          <button id="btnMbDisconnect" class="btn btn-coral" disabled>❌ DISCONNECT</button>
+        </div>
+
+        <div style="text-align: left;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.85rem; font-weight: 700; color: #fde047;">MakeCode JavaScript (Flash to micro:bit):</span>
+            <button id="btnCopyMakeCode" class="hud-btn" style="font-size: 0.75rem;">📋 Copy Code</button>
+          </div>
+          <pre class="code-box" id="makeCodeSnippet">// MakeCode JavaScript for BBC micro:bit
+bluetooth.startUartService()
+bluetooth.onBluetoothConnected(function () {
+    basic.showIcon(IconNames.Happy)
+})
+bluetooth.onBluetoothDisconnected(function () {
+    basic.showIcon(IconNames.Sad)
+})
+input.onButtonPressed(Button.A, function () {
+    bluetooth.uartWriteLine("A")
+})
+input.onButtonPressed(Button.B, function () {
+    bluetooth.uartWriteLine("B")
+})
+input.onButtonPressed(Button.AB, function () {
+    bluetooth.uartWriteLine("JUMP")
+})
+input.onGesture(Gesture.Shake, function () {
+    bluetooth.uartWriteLine("SHAKE")
+})</pre>
+        </div>
+
+        <button id="btnMbClose" class="btn btn-slate" style="margin-top: 16px; width: 100%;">← BACK TO MAIN MENU</button>
+      </div>
+    </section>
+
+    <!-- 6. HOW TO PLAY MODAL -->
+    <section id="screenHowTo" class="screen hidden">
+      <div class="adventure-card wide">
+        <h2 style="font-size: 1.75rem; color: #fde047; margin-bottom: 12px;">📖 HOW TO PLAY</h2>
+        <div style="text-align: left; display: flex; flex-direction: column; gap: 10px; font-size: 0.92rem; color: #e2e8f0;">
+          <div style="background: rgba(15,23,42,0.75); padding: 12px; border-radius: 12px; border-left: 4px solid #34d399;">
+            <strong>🎯 Objective:</strong> Navigate across all 5 island stages, collect golden coins, avoid traps & deep water, and reach the Stage Portal to answer Informatics questions and collect the 3 Ancient Keys!
+          </div>
+          <div style="background: rgba(15,23,42,0.75); padding: 12px; border-radius: 12px; border-left: 4px solid #38bdf8;">
+            <strong>⌨️ Keyboard Controls:</strong><br/>
+            • <strong>Arrow Left / Right</strong> (or <strong>A / D</strong>): Move Left & Right<br/>
+            • <strong>Space</strong> (or <strong>Arrow Up / W</strong>): Jump
+          </div>
+          <div style="background: rgba(15,23,42,0.75); padding: 12px; border-radius: 12px; border-left: 4px solid #fbbf24;">
+            <strong>📡 BBC micro:bit Controls:</strong><br/>
+            • <strong>Button A:</strong> Move Left &nbsp;|&nbsp; <strong>Button B:</strong> Move Right<br/>
+            • <strong>Shake / A+B:</strong> Super Jump & Shield Pulse!
+          </div>
+          <div style="background: rgba(15,23,42,0.75); padding: 12px; border-radius: 12px; border-left: 4px solid #f43f5e;">
+            <strong>❤️ Lives & Scoring:</strong> You have 3 lives. Hitting hazards, falling in the river, or answering a quiz wrongly deducts 1 life. Answer accurately and collect coins for a Legendary rank!
+          </div>
+        </div>
+        <button id="btnHowToClose" class="btn btn-gold" style="margin-top: 18px; width: 100%;">GOT IT!</button>
+      </div>
+    </section>
+
+    <!-- 7. SETTINGS MODAL -->
+    <section id="screenSettings" class="screen hidden">
+      <div class="adventure-card">
+        <h2 style="font-size: 1.75rem; color: #fde047; margin-bottom: 14px;">⚙️ SETTINGS</h2>
+        <div class="form-group">
+          <label for="volumeSlider">🔊 Master Volume: <span id="volumeLabel">70%</span></label>
+          <input type="range" id="volumeSlider" min="0" max="100" value="70" style="width: 100%; accent-color: #fbbf24; cursor: pointer;" />
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: center; margin: 16px 0;">
+          <button id="btnSettingsMusicToggle" class="btn btn-sky" style="flex: 1;">🎵 Music: ON</button>
+          <button id="btnSettingsSfxToggle" class="btn btn-emerald" style="flex: 1;">🔔 SFX: ON</button>
+        </div>
+        <button id="btnSettingsEditProfile" class="btn btn-slate" style="width: 100%; margin-bottom: 10px;">
+          ✏️ EDIT PLAYER NAME / CLASS
+        </button>
+        <button id="btnSettingsClose" class="btn btn-gold" style="width: 100%;">SAVE & BACK</button>
+      </div>
+    </section>
+
+    <!-- 8. IN-GAME INFORMATICS QUIZ MODAL -->
+    <section id="screenQuiz" class="screen hidden">
+      <div class="adventure-card wide">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="background: #0284c7; padding: 4px 12px; border-radius: 99px; font-size: 0.8rem; font-weight: 700;" id="quizStageTag">STAGE 1 CHALLENGE</span>
+          <span style="font-weight: 700; color: #fb7185;" id="quizLivesTag">❤️❤️❤️</span>
+        </div>
+        <h2 style="font-size: 1.45rem; color: #fde047; margin-bottom: 10px;" id="quizTitle">INFORMATICS GATEKEEPER</h2>
+        <p style="font-size: 1.12rem; font-weight: 700; color: #ffffff; background: rgba(15,23,42,0.8); padding: 14px; border-radius: 14px; border: 1px solid #38bdf8;" id="quizQuestion">
+          What does CPU stand for?
+        </p>
+
+        <div id="quizFeedback" class="warning-banner hidden" style="margin-top: 12px; margin-bottom: 0;"></div>
+
+        <div class="quiz-options" id="quizOptionsContainer"></div>
+      </div>
+    </section>
+
+    <!-- 9. STAGE CLEAR POPUP -->
+    <section id="screenStageClear" class="screen hidden">
+      <div class="adventure-card">
+        <div style="font-size: 3rem; margin-bottom: 6px;" id="stageClearIcon">🔑✨</div>
+        <h2 style="font-size: 1.85rem; color: #34d399; margin-bottom: 6px;" id="stageClearHeading">STAGE CLEARED!</h2>
+        <p style="color: #fde047; font-weight: 700; font-size: 1.05rem; margin-bottom: 10px;" id="stageClearReward">
+          You obtained Key 1!
+        </p>
+        <p style="color: var(--text-muted); font-size: 0.92rem; margin-bottom: 18px;" id="stageClearDesc">
+          Awesome job! Ready for the next area of the island?
+        </p>
+        <button id="btnNextStage" class="btn btn-gold" style="width: 100%;">NEXT STAGE ➔</button>
+      </div>
+    </section>
+
+    <!-- 10. GAME OVER SCREEN -->
+    <section id="screenGameOver" class="screen hidden">
+      <div class="adventure-card">
+        <div style="font-size: 3.2rem; margin-bottom: 6px;">💔🏝️</div>
+        <h2 style="font-size: 2.2rem; color: #fb7185; margin-bottom: 8px;">GAME OVER</h2>
+        <p style="color: #e2e8f0; font-size: 1rem; margin-bottom: 16px;" id="gameOverMsg">
+          You ran out of lives on the mysterious island! Don't give up, Explorer!
+        </p>
+        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+          <button id="btnGameOverRetry" class="btn btn-gold">🔄 PLAY AGAIN</button>
+          <button id="btnGameOverMenu" class="btn btn-slate">🏠 MAIN MENU</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11. FINISH / VICTORY SCREEN -->
+    <section id="screenVictory" class="screen hidden">
+      <div class="adventure-card wide">
+        <div style="font-size: 2.6rem; margin-bottom: 2px;">🏆🎉🏝️</div>
+        <h2 style="font-size: clamp(1.8rem, 4.5vw, 2.5rem); color: #fde047; text-shadow: 0 3px 0 #b45309;">CONGRATULATIONS!</h2>
+        <div style="font-family: 'Fredoka', sans-serif; font-size: 1.15rem; color: #34d399; font-weight: 700; margin-top: 2px;">
+          YOU ESCAPED THE ISLAND! • MISSION COMPLETED!
+        </div>
+
+        <div class="rank-badge" id="victoryRank">LEGENDARY EXPLORER</div>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-label">Explorer Name</div>
+            <div class="stat-value" id="vicName">-</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Class (Kelas)</div>
+            <div class="stat-value" id="vicClass">-</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Total Score</div>
+            <div class="stat-value" style="color: #fde047;" id="vicScore">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Total Coins</div>
+            <div class="stat-value" style="color: #fbbf24;" id="vicCoins">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Correct Answers</div>
+            <div class="stat-value" style="color: #34d399;" id="vicCorrect">0 / 7</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Total Play Time</div>
+            <div class="stat-value" style="color: #38bdf8;" id="vicTime">00:00</div>
+          </div>
+        </div>
+
+        <div id="scoreBreakdownBox" class="hidden" style="background: rgba(15,23,42,0.88); border: 1px solid #fbbf24; border-radius: 14px; padding: 12px; margin-bottom: 14px; font-size: 0.85rem; text-align: left; color: #e2e8f0;">
+          <strong>📊 Score Breakdown:</strong><br/>
+          <span id="scoreBreakdownText"></span>
+        </div>
+
+        <p style="font-family: 'Fredoka', sans-serif; color: #fde047; font-size: 1.02rem; margin-bottom: 16px;">
+          "THANK YOU FOR PLAYING! YOU ARE A TRUE LEGEND!"
+        </p>
+
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+          <button id="btnVicPlayAgain" class="btn btn-emerald">🔄 PLAY AGAIN</button>
+          <button id="btnVicViewScore" class="btn btn-sky">📊 VIEW SCORE</button>
+          <button id="btnVicMainMenu" class="btn btn-slate">🏠 MAIN MENU</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    /**
+     * ============================================================================
+     * LET'S PLAY WITH JIHAN! — 2D ADVENTURE & SURVIVAL GAME ENGINE
+     * ============================================================================
+     * Features:
+     * 1. Original Web Audio API procedural chiptune music (Menu, Adventure, Cave, Victory) & SFX
+     * 2. Web Bluetooth Nordic UART Service for BBC micro:bit (A, B, JUMP, SHAKE) + Keyboard + Touch
+     * 3. 5 Distinct Illustrated 2D Platformer Stages with Informatics Quizzes & 3 Keys
+     */
+
+    // ----------------------------------------------------------------------------
+    // 1. WEB AUDIO API PROCEDURAL MUSIC & SOUND ENGINE
+    // ----------------------------------------------------------------------------
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.musicOn = true;
+        this.sfxOn = true;
+        this.volume = 0.7;
+        this.currentTrack = null;
+        this.stepIndex = 0;
+        this.timerId = null;
+
+        // Melodies (frequencies in Hz, 0 = rest)
+        this.tracks = {
+          menu: {
+            tempo: 210,
+            notes: [392, 493.88, 587.33, 493.88, 659.25, 587.33, 493.88, 392, 440, 523.25, 659.25, 523.25, 587.33, 0, 587.33, 0]
+          },
+          adventure: {
+            tempo: 175,
+            notes: [523.25, 659.25, 783.99, 659.25, 587.33, 698.46, 880, 698.46, 523.25, 659.25, 783.99, 1046.5, 987.77, 783.99, 659.25, 0]
+          },
+          cave: {
+            tempo: 280,
+            notes: [220, 0, 261.63, 246.94, 220, 0, 196, 0, 207.65, 0, 246.94, 220, 196, 164.81, 220, 0]
+          },
+          victory: {
+            tempo: 150,
+            notes: [523.25, 659.25, 783.99, 1046.5, 0, 783.99, 1046.5, 1318.5, 1174.66, 1046.5, 987.77, 1046.5, 0, 0, 0, 0]
+          }
+        };
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) {
+            this.ctx = new AudioCtx();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playTone(freq, duration = 0.15, type = 'triangle', gainScale = 0.25) {
+        if (!this.ctx || freq <= 0) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+
+        const peak = Math.max(0.001, this.volume * gainScale);
+        gain.gain.setValueAtTime(peak, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + duration);
+      }
+
+      startMusic(trackName) {
+        this.init();
+        if (this.currentTrack === trackName && this.timerId) return;
+        this.stopMusic();
+        this.currentTrack = trackName;
+        this.stepIndex = 0;
+
+        const track = this.tracks[trackName];
+        if (!track) return;
+
+        this.timerId = setInterval(() => {
+          if (!this.musicOn || !this.ctx) return;
+          const freq = track.notes[this.stepIndex % track.notes.length];
+          const wave = trackName === 'cave' ? 'sine' : 'triangle';
+          if (freq > 0) {
+            this.playTone(freq, (track.tempo / 1000) * 0.85, wave, 0.14);
+          }
+          this.stepIndex++;
+        }, track.tempo);
+      }
+
+      stopMusic() {
+        if (this.timerId) {
+          clearInterval(this.timerId);
+          this.timerId = null;
+        }
+      }
+
+      toggleMusic() {
+        this.musicOn = !this.musicOn;
+        if (this.musicOn && this.currentTrack) {
+          const t = this.currentTrack;
+          this.currentTrack = null;
+          this.startMusic(t);
+        }
+        return this.musicOn;
+      }
+
+      // Sound Effects
+      sfxJump() {
+        if (!this.sfxOn) return;
+        this.init();
+        this.playTone(320, 0.08, 'square', 0.15);
+        setTimeout(() => this.playTone(520, 0.12, 'square', 0.15), 55);
+      }
+
+      sfxBoost() {
+        if (!this.sfxOn) return;
+        this.init();
+        this.playTone(440, 0.08, 'sawtooth', 0.18);
+        setTimeout(() => this.playTone(660, 0.09, 'sawtooth', 0.18), 50);
+        setTimeout(() => this.playTone(880, 0.14, 'sawtooth', 0.18), 100);
+      }
+
+      sfxCoin() {
+        if (!this.sfxOn) return;
+        this.init();
+        this.playTone(987.77, 0.07, 'sine', 0.25);
+        setTimeout(() => this.playTone(1318.51, 0.16, 'sine', 0.25), 65);
+      }
+
+      sfxCorrect() {
+        if (!this.sfxOn) return;
+        this.init();
+        this.playTone(523.25, 0.1, 'triangle', 0.28);
+        setTimeout(() => this.playTone(659.25, 0.1, 'triangle', 0.28), 90);
+        setTimeout(() => this.playTone(783.99, 0.22, 'triangle', 0.28), 180);
+      }
+
+      sfxWrong() {
+        if (!this.sfxOn) return;
+        this.init();
+        this.playTone(220, 0.16, 'sawtooth', 0.25);
+        setTimeout(() => this.playTone(165, 0.26, 'sawtooth', 0.25), 140);
+      }
+
+      sfxStageClear() {
+        if (!this.sfxOn) return;
+        this.init();
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((n, idx) => {
+          setTimeout(() => this.playTone(n, 0.18, 'triangle', 0.28), idx * 110);
+        });
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    // ----------------------------------------------------------------------------
+    // 2. BBC MICRO:BIT WEB BLUETOOTH (NORDIC UART SERVICE) CONTROLLER
+    // ----------------------------------------------------------------------------
+    const UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+    const UART_RX_UUID      = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+    const UART_TX_UUID      = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+
+    const microbit = {
+      device: null,
+      server: null,
+      txChar: null,
+      rxChar: null,
+      connected: false,
+      holdTimer: null,
+
+      updateUI(statusMsg, isConnected, lastSig = null) {
+        this.connected = isConnected;
+        const statusEl = document.getElementById('mbStatusText');
+        const dotEl = document.getElementById('menuMbStatusDot');
+        const btnConn = document.getElementById('btnMbConnect');
+        const btnDisc = document.getElementById('btnMbDisconnect');
+
+        statusEl.textContent = statusMsg;
+        if (isConnected) {
+          dotEl.textContent = 'CONNECTED';
+          dotEl.style.background = '#059669';
+          btnConn.disabled = true;
+          btnDisc.disabled = false;
+        } else {
+          dotEl.textContent = 'OFFLINE';
+          dotEl.style.background = 'rgba(0,0,0,0.3)';
+          btnConn.disabled = false;
+          btnDisc.disabled = true;
+        }
+        if (lastSig) {
+          document.getElementById('mbLastInput').textContent = 'Last Signal: ' + lastSig;
+        }
+      },
+
+      async connect() {
+        if (!navigator.bluetooth) {
+          this.updateUI('Status: Web Bluetooth not supported in this browser (Use Chrome/Edge or Keyboard).', false);
+          return;
+        }
+        try {
+          this.updateUI('Status: Scanning for BBC micro:bit...', false);
+          this.device = await navigator.bluetooth.requestDevice({
+            filters: [{ namePrefix: 'BBC micro:bit' }],
+            optionalServices: [UART_SERVICE_UUID]
+          });
+
+          this.device.addEventListener('gattserverdisconnected', () => {
+            this.updateUI('Status: Disconnected 🔴', false);
+          });
+
+          this.server = await this.device.gatt.connect();
+          const service = await this.server.getPrimaryService(UART_SERVICE_UUID);
+          this.txChar = await service.getCharacteristic(UART_TX_UUID);
+          try {
+            this.rxChar = await service.getCharacteristic(UART_RX_UUID);
+          } catch (_) {}
+
+          await this.txChar.startNotifications();
+          this.txChar.addEventListener('characteristicvaluechanged', (event) => {
+            const decoder = new TextDecoder('utf-8');
+            const raw = decoder.decode(event.target.value).trim().toUpperCase();
+            this.handleCommand(raw);
+          });
+
+          this.updateUI('Status: Connected to ' + (this.device.name || 'micro:bit') + ' 🟢', true);
+        } catch (err) {
+          console.warn('micro:bit connect error:', err);
+          this.updateUI('Status: Connection canceled or failed (Keyboard ready!) 🟡', false);
+        }
+      },
+
+      disconnect() {
+        if (this.device && this.device.gatt && this.device.gatt.connected) {
+          this.device.gatt.disconnect();
+        }
+        this.updateUI('Status: Disconnected 🔴', false);
+      },
+
+      handleCommand(cmd) {
+        if (!cmd) return;
+        this.updateUI('Status: Connected 🟢', true, cmd);
+
+        // Clear previous short pulse hold
+        if (this.holdTimer) clearTimeout(this.holdTimer);
+
+        if (cmd.includes('A') && !cmd.includes('AB') && !cmd.includes('SHAKE')) {
+          keys.left = true;
+          keys.right = false;
+          this.holdTimer = setTimeout(() => { keys.left = false; }, 260);
+        } else if (cmd.includes('B') && !cmd.includes('AB')) {
+          keys.right = true;
+          keys.left = false;
+          this.holdTimer = setTimeout(() => { keys.right = false; }, 260);
+        } else if (cmd.includes('JUMP') || cmd.includes('AB')) {
+          triggerJump();
+        } else if (cmd.includes('SHAKE')) {
+          triggerSpecialShake();
+        }
+      }
+    };
+
+    // ----------------------------------------------------------------------------
+    // 3. STAGE DEFINITIONS & INFORMATICS CURRICULUM QUESTIONS
+    // ----------------------------------------------------------------------------
+    const STAGES = [
+      {
+        id: 1,
+        name: 'Stage 1: The Forest',
+        theme: 'forest',
+        subtitle: 'Navigate the jungle canopy & answer the CPU riddle!',
+        rewardText: 'Key 1 (Emerald Key of Logic)',
+        grantsKey: 1,
+        worldWidth: 2200,
+        platforms: [
+          { x: 0, y: 460, w: 620, h: 140 },
+          { x: 690, y: 410, w: 220, h: 30 },
+          { x: 980, y: 350, w: 230, h: 30 },
+          { x: 1280, y: 420, w: 260, h: 30 },
+          { x: 1610, y: 460, w: 590, h: 140 }
+        ],
+        hazards: [
+          { x: 430, y: 434, w: 46, h: 26, type: 'thorns' },
+          { x: 1380, y: 394, w: 46, h: 26, type: 'thorns' }
+        ],
+        coins: [
+          { x: 250, y: 410 }, { x: 310, y: 410 }, { x: 780, y: 360 },
+          { x: 1080, y: 300 }, { x: 1390, y: 340 }, { x: 1750, y: 410 }, { x: 1830, y: 410 }
+        ],
+        goalX: 2040,
+        goalY: 360,
+        questions: [
+          {
+            q: 'What does CPU stand for?',
+            options: [
+              'Central Processing Unit',
+              'Computer Personal Unit',
+              'Central Power Utility',
+              'Control Program User'
+            ],
+            correctIndex: 0
+          }
+        ]
+      },
+      {
+        id: 2,
+        name: 'Stage 2: The River',
+        theme: 'river',
+        subtitle: 'Leap across river stepping stones — stay out of the deep current!',
+        rewardText: 'Key 2 (Sapphire Key of Input)',
+        grantsKey: 2,
+        worldWidth: 2350,
+        hasWater: true,
+        platforms: [
+          { x: 0, y: 460, w: 420, h: 140 },
+          { x: 500, y: 430, w: 150, h: 28, stone: true },
+          { x: 730, y: 390, w: 150, h: 28, stone: true },
+          { x: 970, y: 350, w: 160, h: 28, stone: true },
+          { x: 1220, y: 390, w: 150, h: 28, stone: true },
+          { x: 1460, y: 420, w: 160, h: 28, stone: true },
+          { x: 1710, y: 460, w: 640, h: 140 }
+        ],
+        hazards: [
+          { x: 1880, y: 434, w: 46, h: 26, type: 'crab' }
+        ],
+        coins: [
+          { x: 565, y: 380 }, { x: 795, y: 340 }, { x: 1040, y: 300 },
+          { x: 1285, y: 340 }, { x: 1530, y: 370 }, { x: 1980, y: 410 }, { x: 2050, y: 410 }
+        ],
+        goalX: 2190,
+        goalY: 360,
+        questions: [
+          {
+            q: 'Which device is used to type letters and numbers?',
+            options: [
+              'Monitor',
+              'Keyboard',
+              'Speaker',
+              'Scanner'
+            ],
+            correctIndex: 1
+          }
+        ]
+      },
+      {
+        id: 3,
+        name: 'Stage 3: The Dark Cave',
+        theme: 'cave',
+        subtitle: 'Use your explorer lantern to navigate the shadows!',
+        rewardText: 'Key 3 (Amber Key of Vision)',
+        grantsKey: 3,
+        worldWidth: 2400,
+        isDark: true,
+        platforms: [
+          { x: 0, y: 460, w: 540, h: 140 },
+          { x: 610, y: 400, w: 210, h: 30 },
+          { x: 900, y: 340, w: 220, h: 30 },
+          { x: 1200, y: 390, w: 230, h: 30 },
+          { x: 1510, y: 330, w: 210, h: 30 },
+          { x: 1800, y: 460, w: 600, h: 140 }
+        ],
+        hazards: [
+          { x: 390, y: 432, w: 46, h: 28, type: 'crystal' },
+          { x: 1290, y: 362, w: 46, h: 28, type: 'crystal' }
+        ],
+        coins: [
+          { x: 260, y: 410 }, { x: 700, y: 350 }, { x: 1000, y: 290 },
+          { x: 1300, y: 310 }, { x: 1600, y: 280 }, { x: 1960, y: 410 }, { x: 2040, y: 410 }
+        ],
+        goalX: 2240,
+        goalY: 360,
+        questions: [
+          {
+            q: 'Which device is used to display visual output?',
+            options: [
+              'Microphone',
+              'Hard Disk',
+              'Monitor',
+              'Keyboard'
+            ],
+            correctIndex: 2
+          }
+        ]
+      },
+      {
+        id: 4,
+        name: 'Stage 4: The Computer Temple',
+        theme: 'temple',
+        subtitle: 'Ascend the sacred circuit ruins and solve the Memory Trial!',
+        rewardText: 'Temple Seal Unlocked!',
+        grantsKey: 0,
+        worldWidth: 2500,
+        platforms: [
+          { x: 0, y: 460, w: 500, h: 140 },
+          { x: 570, y: 400, w: 200, h: 28 },
+          { x: 840, y: 330, w: 200, h: 28 },
+          { x: 1120, y: 270, w: 220, h: 28 },
+          { x: 1420, y: 340, w: 220, h: 28 },
+          { x: 1720, y: 400, w: 200, h: 28 },
+          { x: 1980, y: 460, w: 520, h: 140 }
+        ],
+        hazards: [
+          { x: 350, y: 434, w: 46, h: 26, type: 'laser' },
+          { x: 1205, y: 244, w: 46, h: 26, type: 'laser' },
+          { x: 2130, y: 434, w: 46, h: 26, type: 'laser' }
+        ],
+        coins: [
+          { x: 240, y: 410 }, { x: 660, y: 350 }, { x: 930, y: 280 },
+          { x: 1220, y: 200 }, { x: 1520, y: 290 }, { x: 1810, y: 350 }, { x: 2230, y: 410 }
+        ],
+        goalX: 2350,
+        goalY: 360,
+        questions: [
+          {
+            q: 'What is the main function of RAM?',
+            options: [
+              'To permanently store photos and videos forever',
+              'To temporarily store data while the computer is working',
+              'To cool down the processor temperature',
+              'To connect the computer to Wi-Fi networks'
+            ],
+            correctIndex: 1
+          }
+        ]
+      },
+      {
+        id: 5,
+        name: 'Stage 5: Final Challenge',
+        theme: 'final',
+        subtitle: 'Use your 3 Keys at the Escape Gate and pass the Final Triad!',
+        rewardText: 'THE ISLAND ESCAPE GATE IS OPEN!',
+        grantsKey: 0,
+        worldWidth: 2100,
+        platforms: [
+          { x: 0, y: 460, w: 560, h: 140 },
+          { x: 640, y: 390, w: 240, h: 28 },
+          { x: 960, y: 330, w: 260, h: 28 },
+          { x: 1300, y: 390, w: 240, h: 28 },
+          { x: 1610, y: 460, w: 490, h: 140 }
+        ],
+        hazards: [
+          { x: 420, y: 434, w: 46, h: 26, type: 'laser' },
+          { x: 1070, y: 304, w: 46, h: 26, type: 'laser' }
+        ],
+        coins: [
+          { x: 260, y: 410 }, { x: 330, y: 410 }, { x: 750, y: 340 },
+          { x: 1080, y: 260 }, { x: 1410, y: 340 }, { x: 1740, y: 410 }
+        ],
+        goalX: 1930,
+        goalY: 360,
+        questions: [
+          {
+            q: 'Question 1/3: What does HTML stand for?',
+            options: [
+              'HyperText Markup Language',
+              'HighTech Machine Learning',
+              'Hyperlink Text Management Logic',
+              'Home Tool Markup Language'
+            ],
+            correctIndex: 0
+          },
+          {
+            q: 'Question 2/3: What is the function of a mouse?',
+            options: [
+              'To print documents onto paper',
+              'To move the pointer and select objects',
+              'To store backup system files',
+              'To supply electrical power to the CPU'
+            ],
+            correctIndex: 1
+          },
+          {
+            q: 'Question 3/3: Which numbers are used in the binary system?',
+            options: [
+              '1 and 2',
+              '0 to 9',
+              '0 and 1',
+              '1 to 10'
+            ],
+            correctIndex: 2
+          }
+        ]
+      }
+    ];
+
+    // ----------------------------------------------------------------------------
+    // 4. GAME STATE & PLAYER DATA
+    // ----------------------------------------------------------------------------
+    const state = {
+      screen: 'opening', // opening, register, menu, story, playing, quiz, stageClear, gameover, victory
+      playerName: '',
+      playerClass: '',
+      stageIndex: 0,
+      lives: 3,
+      score: 0,
+      coins: 0,
+      keysCollected: 0,
+      correctAnswers: 0,
+      elapsedSeconds: 0,
+      timerInterval: null,
+      quizSubIndex: 0,
+      cameraX: 0,
+      shieldTimer: 0, // Activated by micro:bit Shake or Special button
+      particles: [],
+      confetti: [],
+      stageCoins: [],
+      animTick: 0
+    };
+
+    const player = {
+      x: 80,
+      y: 350,
+      w: 36,
+      h: 48,
+      vx: 0,
+      vy: 0,
+      speed: 4.6,
+      jumpPower: -12.4,
+      grounded: false,
+      facing: 1,
+      invuln: 0
+    };
+
+    const keys = {
+      left: false,
+      right: false
+    };
+
+    // Canvas Setup
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const BASE_HEIGHT = 600; // Virtual vertical resolution for consistent platforming physics
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // ----------------------------------------------------------------------------
+    // 5. SCREEN NAVIGATION HELPERS
+    // ----------------------------------------------------------------------------
+    const allScreens = [
+      'screenOpening', 'screenRegister', 'screenMenu', 'screenStory',
+      'screenMicrobit', 'screenHowTo', 'screenSettings', 'screenQuiz',
+      'screenStageClear', 'screenGameOver', 'screenVictory'
+    ];
+
+    function showScreen(screenId, gameMode = null) {
+      allScreens.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+
+      const hud = document.getElementById('hud');
+      const touch = document.getElementById('touchControls');
+
+      if (screenId) {
+        document.getElementById(screenId).classList.remove('hidden');
+      }
+
+      if (gameMode === 'playing') {
+        state.screen = 'playing';
+        hud.classList.remove('hidden');
+        touch.classList.remove('hidden');
+      } else {
+        hud.classList.add('hidden');
+        touch.classList.add('hidden');
+        if (gameMode) state.screen = gameMode;
+      }
+    }
+
+    function formatTime(totalSec) {
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    }
+
+    function updateHUD() {
+      document.getElementById('hudPlayer').textContent = `🧭 ${state.playerName} (${state.playerClass})`;
+      document.getElementById('hudLives').textContent = '❤️'.repeat(Math.max(0, state.lives)) + '🖤'.repeat(Math.max(0, 3 - state.lives));
+      document.getElementById('hudStage').textContent = `Stage ${state.stageIndex + 1}/5`;
+      document.getElementById('hudCoins').textContent = `🪙 ${state.coins}`;
+      document.getElementById('hudKeys').textContent = `🔑 ${state.keysCollected}/3`;
+      document.getElementById('hudScore').textContent = `⭐ ${state.score}`;
+      document.getElementById('hudTimer').textContent = `⏱️ ${formatTime(state.elapsedSeconds)}`;
+    }
+
+    function showStageToast(text) {
+      const toast = document.getElementById('stageToast');
+      toast.textContent = text;
+      toast.classList.remove('hidden');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => toast.classList.add('hidden'), 2600);
+    }
+
+    // ----------------------------------------------------------------------------
+    // 6. CORE GAMEPLAY & STAGE LIFECYCLE
+    // ----------------------------------------------------------------------------
+    function startNewExpedition() {
+      state.stageIndex = 0;
+      state.lives = 3;
+      state.score = 0;
+      state.coins = 0;
+      state.keysCollected = 0;
+      state.correctAnswers = 0;
+      state.elapsedSeconds = 0;
+      state.confetti = [];
+
+      if (state.timerInterval) clearInterval(state.timerInterval);
+      state.timerInterval = setInterval(() => {
+        if (state.screen === 'playing' || state.screen === 'quiz') {
+          state.elapsedSeconds++;
+          updateHUD();
+        }
+      }, 1000);
+
+      loadStage(0);
+    }
+
+    function loadStage(idx) {
+      state.stageIndex = idx;
+      const stage = STAGES[idx];
+
+      // Reset player at stage spawn
+      player.x = 70;
+      player.y = 360;
+      player.vx = 0;
+      player.vy = 0;
+      player.grounded = false;
+      player.facing = 1;
+      player.invuln = 40;
+      state.cameraX = 0;
+      state.shieldTimer = 0;
+      state.particles = [];
+
+      // Clone stage coins
+      state.stageCoins = stage.coins.map(c => ({ x: c.x, y: c.y, collected: false }));
+
+      // Switch music appropriately (Special mysterious music in Dark Cave!)
+      if (stage.theme === 'cave') {
+        sound.startMusic('cave');
+      } else {
+        sound.startMusic('adventure');
+      }
+
+      updateHUD();
+      showScreen(null, 'playing');
+      showStageToast(`${stage.name} — ${stage.subtitle}`);
+    }
+
+    function respawnPlayerInStage() {
+      player.x = 70;
+      player.y = 340;
+      player.vx = 0;
+      player.vy = 0;
+      player.invuln = 90;
+      state.cameraX = 0;
+    }
+
+    function damagePlayer(reasonText) {
+      if (player.invuln > 0 || state.shieldTimer > 0) return;
+      sound.sfxWrong();
+      state.lives--;
+      updateHUD();
+      spawnBurst(player.x + player.w / 2, player.y + player.h / 2, '#f43f5e', 18);
+
+      if (state.lives <= 0) {
+        if (state.timerInterval) clearInterval(state.timerInterval);
+        document.getElementById('gameOverMsg').textContent =
+          `${reasonText} ${state.playerName} (${state.playerClass}) ran out of lives!`;
+        showScreen('screenGameOver', 'gameover');
+      } else {
+        showStageToast(`⚠️ ${reasonText} (-1 Life)`);
+        respawnPlayerInStage();
+      }
+    }
+
+    function triggerJump() {
+      if (state.screen !== 'playing') return;
+      if (player.grounded) {
+        player.vy = player.jumpPower;
+        player.grounded = false;
+        sound.sfxJump();
+        spawnBurst(player.x + player.w / 2, player.y + player.h, '#e2e8f0', 8);
+      }
+    }
+
+    function triggerSpecialShake() {
+      if (state.screen !== 'playing') return;
+      // micro:bit Shake activates a protective energy shield + high boost jump!
+      state.shieldTimer = 180; // 3 seconds shield
+      player.vy = -14.2;
+      player.grounded = false;
+      sound.sfxBoost();
+      spawnBurst(player.x + player.w / 2, player.y + player.h / 2, '#38bdf8', 22);
+      showStageToast('⚡ MICRO:BIT SHAKE BOOST & SHIELD!');
+    }
+
+    function spawnBurst(x, y, color, count = 12) {
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.4;
+        const speed = 1.5 + Math.random() * 3.5;
+        state.particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 1,
+          life: 28 + Math.random() * 14,
+          color,
+          size: 3 + Math.random() * 3
+        });
+      }
+    }
+
+    // ----------------------------------------------------------------------------
+    // 7. INFORMATICS QUIZ SYSTEM
+    // ----------------------------------------------------------------------------
+    function openStageQuiz() {
+      state.quizSubIndex = 0;
+      keys.left = false;
+      keys.right = false;
+      renderQuizQuestion();
+      showScreen('screenQuiz', 'quiz');
+    }
+
+    function renderQuizQuestion() {
+      const stage = STAGES[state.stageIndex];
+      const qObj = stage.questions[state.quizSubIndex];
+
+      document.getElementById('quizStageTag').textContent = stage.name.toUpperCase();
+      document.getElementById('quizLivesTag').textContent =
+        '❤️'.repeat(Math.max(0, state.lives)) + '🖤'.repeat(Math.max(0, 3 - state.lives));
+      document.getElementById('quizTitle').textContent =
+        stage.questions.length > 1
+          ? `FINAL GATE CHALLENGE (${state.quizSubIndex + 1} of ${stage.questions.length})`
+          : 'INFORMATICS CHALLENGE';
+      document.getElementById('quizQuestion').textContent = qObj.q;
+
+      const feedback = document.getElementById('quizFeedback');
+      feedback.classList.add('hidden');
+
+      const container = document.getElementById('quizOptionsContainer');
+      container.innerHTML = '';
+      const letters = ['A', 'B', 'C', 'D'];
+
+      qObj.options.forEach((optText, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-option-btn';
+        btn.innerHTML = `<span class="quiz-letter">${letters[idx]}</span><span>${optText}</span>`;
+        btn.addEventListener('click', () => handleQuizAnswer(idx));
+        container.appendChild(btn);
+      });
+    }
+
+    function handleQuizAnswer(selectedIdx) {
+      const stage = STAGES[state.stageIndex];
+      const qObj = stage.questions[state.quizSubIndex];
+      const feedback = document.getElementById('quizFeedback');
+
+      if (selectedIdx === qObj.correctIndex) {
+        sound.sfxCorrect();
+        state.correctAnswers++;
+        state.score += 150;
+        updateHUD();
+
+        if (state.quizSubIndex + 1 < stage.questions.length) {
+          state.quizSubIndex++;
+          renderQuizQuestion();
+        } else {
+          completeCurrentStage();
+        }
+      } else {
+        sound.sfxWrong();
+        state.lives--;
+        updateHUD();
+        document.getElementById('quizLivesTag').textContent =
+          '❤️'.repeat(Math.max(0, state.lives)) + '🖤'.repeat(Math.max(0, 3 - state.lives));
+
+        if (state.lives <= 0) {
+          if (state.timerInterval) clearInterval(state.timerInterval);
+          document.getElementById('gameOverMsg').textContent =
+            `Incorrect answer! ${state.playerName} (${state.playerClass}) lost all lives.`;
+          showScreen('screenGameOver', 'gameover');
+        } else {
+          feedback.textContent = '❌ Wrong answer! -1 Life. Think carefully and try again!';
+          feedback.classList.remove('hidden');
+        }
+      }
+    }
+
+    function completeCurrentStage() {
+      const stage = STAGES[state.stageIndex];
+      sound.sfxStageClear();
+      state.score += 200;
+      if (stage.grantsKey > 0) {
+        state.keysCollected = Math.max(state.keysCollected, stage.grantsKey);
+      }
+      updateHUD();
+
+      if (state.stageIndex + 1 < STAGES.length) {
+        document.getElementById('stageClearIcon').textContent = stage.grantsKey > 0 ? '🔑✨' : '🏛️✨';
+        document.getElementById('stageClearHeading').textContent = `${stage.name} COMPLETED!`;
+        document.getElementById('stageClearReward').textContent = `Reward: ${stage.rewardText}`;
+        document.getElementById('stageClearDesc').textContent =
+          `Keys Collected: ${state.keysCollected}/3 • Current Score: ${state.score}`;
+        showScreen('screenStageClear', 'stageClear');
+      } else {
+        triggerVictoryScreen();
+      }
+    }
+
+    function triggerVictoryScreen() {
+      if (state.timerInterval) clearInterval(state.timerInterval);
+      sound.startMusic('victory');
+
+      // Time bonus
+      const timeBonus = Math.max(0, 300 - state.elapsedSeconds);
+      const lifeBonus = state.lives * 100;
+      state.score += timeBonus + lifeBonus;
+
+      // Determine Explorer Rank
+      let rank = 'ADVENTURE ROOKIE';
+      if (state.score >= 1650) {
+        rank = 'LEGENDARY EXPLORER';
+      } else if (state.score >= 1350) {
+        rank = 'MASTER SURVIVOR';
+      } else if (state.score >= 1050) {
+        rank = 'SMART EXPLORER';
+      }
+
+      document.getElementById('victoryRank').textContent = `🏅 ${rank}`;
+      document.getElementById('vicName').textContent = state.playerName;
+      document.getElementById('vicClass').textContent = state.playerClass;
+      document.getElementById('vicScore').textContent = state.score;
+      document.getElementById('vicCoins').textContent = state.coins;
+      document.getElementById('vicCorrect').textContent = `${state.correctAnswers} / 7`;
+      document.getElementById('vicTime').textContent = formatTime(state.elapsedSeconds);
+
+      document.getElementById('scoreBreakdownText').textContent =
+        `Coins (${state.coins} × 25 = ${state.coins * 25}) + Quizzes (${state.correctAnswers} × 150 = ${state.correctAnswers * 150}) + Stage Clears (1000) + Lives Bonus (${lifeBonus}) + Speed Bonus (${timeBonus}) = ${state.score} pts`;
+
+      // Spawn celebratory confetti
+      state.confetti = [];
+      const colors = ['#fde047', '#34d399', '#38bdf8', '#fb7185', '#a78bfa'];
+      for (let i = 0; i < 110; i++) {
+        state.confetti.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * -canvas.height,
+          w: 7 + Math.random() * 6,
+          h: 10 + Math.random() * 8,
+          vy: 2 + Math.random() * 3.5,
+          vx: (Math.random() - 0.5) * 2,
+          rot: Math.random() * Math.PI * 2,
+          vrot: (Math.random() - 0.5) * 0.15,
+          color: colors[i % colors.length]
+        });
+      }
+
+      showScreen('screenVictory', 'victory');
+    }
+
+    // ----------------------------------------------------------------------------
+    // 8. PHYSICS & UPDATE LOOP
+    // ----------------------------------------------------------------------------
+    function updatePhysics() {
+      state.animTick++;
+
+      // Update victory confetti if on victory screen
+      if (state.screen === 'victory') {
+        state.confetti.forEach(c => {
+          c.y += c.vy;
+          c.x += c.vx;
+          c.rot += c.vrot;
+          if (c.y > canvas.height + 20) {
+            c.y = -20;
+            c.x = Math.random() * canvas.width;
+          }
+        });
+        return;
+      }
+
+      if (state.screen !== 'playing') return;
+
+      const stage = STAGES[state.stageIndex];
+      const scale = canvas.height / BASE_HEIGHT;
+      const viewWidthVirtual = canvas.width / scale;
+
+      if (player.invuln > 0) player.invuln--;
+      if (state.shieldTimer > 0) state.shieldTimer--;
+
+      // Horizontal movement
+      if (keys.left) {
+        player.vx = -player.speed;
+        player.facing = -1;
+      } else if (keys.right) {
+        player.vx = player.speed;
+        player.facing = 1;
+      } else {
+        player.vx *= 0.72;
+        if (Math.abs(player.vx) < 0.1) player.vx = 0;
+      }
+
+      player.x += player.vx;
+      if (player.x < 10) player.x = 10;
+      if (player.x + player.w > stage.worldWidth - 10) {
+        player.x = stage.worldWidth - 10 - player.w;
+      }
+
+      // Gravity & vertical movement
+      player.vy += 0.58;
+      if (player.vy > 14) player.vy = 14;
+      player.y += player.vy;
+      player.grounded = false;
+
+      // Platform collisions (top-down landing)
+      for (const plat of stage.platforms) {
+        const withinX = player.x + player.w > plat.x + 4 && player.x < plat.x + plat.w - 4;
+        const prevBottom = player.y + player.h - player.vy;
+        if (withinX && player.vy >= 0 && prevBottom <= plat.y + 12 && player.y + player.h >= plat.y) {
+          player.y = plat.y - player.h;
+          player.vy = 0;
+          player.grounded = true;
+        }
+      }
+
+      // Pit / River fall check
+      if (player.y > BASE_HEIGHT + 30) {
+        damagePlayer(stage.hasWater ? 'You fell into the rushing river!' : 'You fell into a deep ravine!');
+        return;
+      }
+
+      // Hazard collisions
+      for (const haz of stage.hazards) {
+        if (
+          player.x + player.w - 6 > haz.x &&
+          player.x + 6 < haz.x + haz.w &&
+          player.y + player.h - 4 > haz.y &&
+          player.y + 6 < haz.y + haz.h
+        ) {
+          damagePlayer('Watch out for island traps!');
+          return;
+        }
+      }
+
+      // Coin pickups
+      for (const coin of state.stageCoins) {
+        if (!coin.collected) {
+          const dx = (player.x + player.w / 2) - coin.x;
+          const dy = (player.y + player.h / 2) - coin.y;
+          if (Math.hypot(dx, dy) < 30) {
+            coin.collected = true;
+            state.coins++;
+            state.score += 25;
+            sound.sfxCoin();
+            spawnBurst(coin.x, coin.y, '#fde047', 10);
+            updateHUD();
+          }
+        }
+      }
+
+      // Particles update
+      for (let i = state.particles.length - 1; i >= 0; i--) {
+        const p = state.particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.12;
+        p.life--;
+        if (p.life <= 0) state.particles.splice(i, 1);
+      }
+
+      // Smooth camera tracking
+      const targetCam = player.x - viewWidthVirtual * 0.35;
+      const maxCam = Math.max(0, stage.worldWidth - viewWidthVirtual);
+      state.cameraX += (Math.max(0, Math.min(maxCam, targetCam)) - state.cameraX) * 0.12;
+
+      // Reach Stage Portal / Gate
+      const distToGoal = Math.hypot((player.x + player.w / 2) - stage.goalX, (player.y + player.h / 2) - (stage.goalY + 50));
+      if (distToGoal < 56) {
+        openStageQuiz();
+      }
+    }
+
+    // ----------------------------------------------------------------------------
+    // 9. 2D VECTOR CANVAS RENDERING (ISLAND, FOREST, RIVER, CAVE, TEMPLE, SPRITES)
+    // ----------------------------------------------------------------------------
+    function drawScenicBackdrop() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const t = state.animTick * 0.02;
+
+      // Tropical Sky Gradient
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+      skyGrad.addColorStop(0, '#0c4a6e');
+      skyGrad.addColorStop(0.55, '#0284c7');
+      skyGrad.addColorStop(1, '#2dd4bf');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Glowing Sun
+      ctx.fillStyle = 'rgba(253, 224, 71, 0.25)';
+      ctx.beginPath();
+      ctx.arc(w * 0.78, h * 0.22, 85 + Math.sin(t) * 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fde047';
+      ctx.beginPath();
+      ctx.arc(w * 0.78, h * 0.22, 54, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Drifting Clouds
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+      for (let i = 0; i < 4; i++) {
+        const cx = ((w * 0.25 * i + state.animTick * 0.35) % (w + 200)) - 100;
+        const cy = h * (0.14 + (i % 2) * 0.09);
+        ctx.beginPath();
+        ctx.arc(cx, cy, 26, 0, Math.PI * 2);
+        ctx.arc(cx + 24, cy - 8, 32, 0, Math.PI * 2);
+        ctx.arc(cx + 52, cy, 24, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Ocean Horizon
+      const oceanY = h * 0.72;
+      const seaGrad = ctx.createLinearGradient(0, oceanY, 0, h);
+      seaGrad.addColorStop(0, '#0ea5e9');
+      seaGrad.addColorStop(1, '#0369a1');
+      ctx.fillStyle = seaGrad;
+      ctx.fillRect(0, oceanY, w, h - oceanY);
+
+      // Mysterious Island Volcano & Lush Peaks in Center
+      const midX = w * 0.5;
+      ctx.fillStyle = '#15803d';
+      ctx.beginPath();
+      ctx.moveTo(midX - 280, oceanY + 12);
+      ctx.quadraticCurveTo(midX - 160, oceanY - 130, midX - 40, oceanY - 70);
+      ctx.quadraticCurveTo(midX + 90, oceanY - 190, midX + 270, oceanY + 12);
+      ctx.closePath();
+      ctx.fill();
+
+      // Golden Sandy Beach
+      ctx.fillStyle = '#fcd34d';
+      ctx.beginPath();
+      ctx.ellipse(midX, oceanY + 14, 295, 26, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Palm Trees on Island
+      drawPalmTree(midX - 180, oceanY - 2, 0.9);
+      drawPalmTree(midX + 185, oceanY, 1.05);
+    }
+
+    function drawPalmTree(x, y, scale = 1) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 8;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(-12, -45, 6, -85);
+      ctx.stroke();
+
+      ctx.fillStyle = '#16a34a';
+      for (let a = 0; a < 5; a++) {
+        ctx.save();
+        ctx.translate(6, -85);
+        ctx.rotate((a - 2) * 0.55 + Math.sin(state.animTick * 0.04) * 0.05);
+        ctx.beginPath();
+        ctx.ellipse(24, 0, 28, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
+    function drawGameplayStage() {
+      const stage = STAGES[state.stageIndex];
+      const scale = canvas.height / BASE_HEIGHT;
+      const viewW = canvas.width / scale;
+
+      ctx.save();
+      ctx.scale(scale, scale);
+
+      // 1. Stage Sky / Environment Background
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, BASE_HEIGHT);
+      if (stage.theme === 'forest') {
+        bgGrad.addColorStop(0, '#065f46');
+        bgGrad.addColorStop(0.55, '#10b981');
+        bgGrad.addColorStop(1, '#a7f3d0');
+      } else if (stage.theme === 'river') {
+        bgGrad.addColorStop(0, '#0369a1');
+        bgGrad.addColorStop(0.6, '#38bdf8');
+        bgGrad.addColorStop(1, '#bae6fd');
+      } else if (stage.theme === 'cave') {
+        bgGrad.addColorStop(0, '#090d16');
+        bgGrad.addColorStop(1, '#1e1b4b');
+      } else if (stage.theme === 'temple') {
+        bgGrad.addColorStop(0, '#312e81');
+        bgGrad.addColorStop(0.6, '#d97706');
+        bgGrad.addColorStop(1, '#fde68a');
+      } else {
+        bgGrad.addColorStop(0, '#1e1b4b');
+        bgGrad.addColorStop(0.5, '#0f766e');
+        bgGrad.addColorStop(1, '#5eead4');
+      }
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, viewW, BASE_HEIGHT);
+
+      // Parallax Background Silhouettes
+      ctx.save();
+      ctx.translate(-state.cameraX * 0.3, 0);
+      drawStageParallax(stage, viewW);
+      ctx.restore();
+
+      // World Space Camera Transform
+      ctx.save();
+      ctx.translate(-state.cameraX, 0);
+
+      // 2. River Water Layer (Stage 2)
+      if (stage.hasWater) {
+        const wave = Math.sin(state.animTick * 0.08) * 4;
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(0, 505 + wave, stage.worldWidth, 120);
+        ctx.fillStyle = 'rgba(186, 230, 253, 0.45)';
+        for (let wx = 40; wx < stage.worldWidth; wx += 140) {
+          ctx.fillRect(wx + wave * 2, 515 + wave, 65, 5);
+        }
+      }
+
+      // 3. Platforms
+      for (const plat of stage.platforms) {
+        drawPlatform(plat, stage.theme);
+      }
+
+      // 4. Hazards
+      for (const haz of stage.hazards) {
+        drawHazard(haz);
+      }
+
+      // 5. Golden Coins
+      for (const coin of state.stageCoins) {
+        if (!coin.collected) {
+          const bob = Math.sin(state.animTick * 0.08 + coin.x * 0.05) * 4;
+          ctx.fillStyle = '#fbbf24';
+          ctx.beginPath();
+          ctx.arc(coin.x, coin.y + bob, 13, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#fef08a';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+
+          ctx.fillStyle = '#92400e';
+          ctx.font = 'bold 13px Fredoka, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('$', coin.x, coin.y + bob + 4.5);
+        }
+      }
+
+      // 6. Stage Escape / Challenge Portal
+      drawPortal(stage.goalX, stage.goalY, stage.id === 5);
+
+      // 7. Explorer Character (Jihan)
+      drawExplorer(player);
+
+      // 8. Particles
+      for (const p of state.particles) {
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore(); // End world space
+
+      // 9. Dark Cave Torchlight Mask (Stage 3)
+      if (stage.isDark) {
+        const px = (player.x + player.w / 2) - state.cameraX;
+        const py = player.y + player.h / 2;
+        const radius = 175 + Math.sin(state.animTick * 0.1) * 8;
+
+        const darkGrad = ctx.createRadialGradient(px, py, radius * 0.35, px, py, radius);
+        darkGrad.addColorStop(0, 'rgba(9, 13, 22, 0)');
+        darkGrad.addColorStop(0.75, 'rgba(9, 13, 22, 0.72)');
+        darkGrad.addColorStop(1, 'rgba(9, 13, 22, 0.94)');
+
+        ctx.fillStyle = darkGrad;
+        ctx.fillRect(0, 0, viewW, BASE_HEIGHT);
+      }
+
+      ctx.restore();
+    }
+
+    function drawStageParallax(stage, viewW) {
+      const totalSpan = stage.worldWidth + viewW;
+      if (stage.theme === 'forest' || stage.theme === 'river') {
+        for (let x = 60; x < totalSpan; x += 220) {
+          ctx.fillStyle = 'rgba(6, 78, 59, 0.35)';
+          ctx.beginPath();
+          ctx.moveTo(x, 480);
+          ctx.lineTo(x + 55, 230);
+          ctx.lineTo(x + 110, 480);
+          ctx.closePath();
+          ctx.fill();
+        }
+      } else if (stage.theme === 'temple' || stage.theme === 'final') {
+        for (let x = 100; x < totalSpan; x += 320) {
+          ctx.fillStyle = 'rgba(251, 191, 36, 0.14)';
+          ctx.fillRect(x, 180, 44, 300);
+          ctx.fillRect(x - 14, 165, 72, 20);
+        }
+      }
+    }
+
+    function drawPlatform(plat, theme) {
+      let bodyColor = '#78350f';
+      let topColor = '#22c55e';
+
+      if (plat.stone) {
+        bodyColor = '#475569';
+        topColor = '#94a3b8';
+      } else if (theme === 'cave') {
+        bodyColor = '#1e293b';
+        topColor = '#6366f1';
+      } else if (theme === 'temple' || theme === 'final') {
+        bodyColor = '#92400e';
+        topColor = '#fbbf24';
+      }
+
+      // Main block
+      ctx.fillStyle = bodyColor;
+      ctx.beginPath();
+      ctx.roundRect(plat.x, plat.y, plat.w, plat.h, 10);
+      ctx.fill();
+
+      // Top turf / cap
+      ctx.fillStyle = topColor;
+      ctx.beginPath();
+      ctx.roundRect(plat.x, plat.y, plat.w, 10, [10, 10, 2, 2]);
+      ctx.fill();
+    }
+
+    function drawHazard(haz) {
+      ctx.fillStyle = haz.type === 'laser' ? '#38bdf8' : '#f43f5e';
+      const spikes = 3;
+      const sw = haz.w / spikes;
+      for (let i = 0; i < spikes; i++) {
+        ctx.beginPath();
+        ctx.moveTo(haz.x + i * sw, haz.y + haz.h);
+        ctx.lineTo(haz.x + i * sw + sw / 2, haz.y);
+        ctx.lineTo(haz.x + (i + 1) * sw, haz.y + haz.h);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    function drawPortal(x, y, isFinalGate) {
+      const pulse = Math.sin(state.animTick * 0.08) * 5;
+      // Stone Arch
+      ctx.fillStyle = isFinalGate ? '#f59e0b' : '#334155';
+      ctx.beginPath();
+      ctx.roundRect(x - 36, y, 72, 100, [36, 36, 4, 4]);
+      ctx.fill();
+
+      // Glowing Vortex
+      const grad = ctx.createRadialGradient(x, y + 52, 6, x, y + 52, 34 + pulse);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.5, isFinalGate ? '#fde047' : '#38bdf8');
+      grad.addColorStop(1, isFinalGate ? '#059669' : '#1d4ed8');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(x - 24, y + 14, 48, 86, [24, 24, 0, 0]);
+      ctx.fill();
+
+      // Label above portal
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 13px Fredoka, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(isFinalGate ? 'FINAL GATE' : 'QUIZ PORTAL', x, y - 10);
+    }
+
+    function drawExplorer(p) {
+      if (p.invuln > 0 && Math.floor(p.invuln / 4) % 2 === 0) return;
+
+      ctx.save();
+      ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+
+      // Shield bubble if micro:bit shake boost is active
+      if (state.shieldTimer > 0) {
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 3;
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
+        ctx.beginPath();
+        ctx.arc(0, 0, 34, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      ctx.scale(p.facing, 1);
+
+      // Backpack
+      ctx.fillStyle = '#d97706';
+      ctx.beginPath();
+      ctx.roundRect(-18, -8, 10, 20, 4);
+      ctx.fill();
+
+      // Legs (walking bob)
+      const stride = Math.abs(p.vx) > 0.3 ? Math.sin(state.animTick * 0.35) * 4 : 0;
+      ctx.fillStyle = '#1e3a8a';
+      ctx.fillRect(-10, 10, 7, 14 + stride);
+      ctx.fillRect(3, 10, 7, 14 - stride);
+
+      // Adventure Tunic Body
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.roundRect(-12, -8, 24, 20, 6);
+      ctx.fill();
+
+      // Scarf
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillRect(-12, -9, 24, 5);
+
+      // Head
+      ctx.fillStyle = '#fde68a';
+      ctx.beginPath();
+      ctx.arc(0, -16, 11, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Explorer Hat
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.ellipse(0, -23, 16, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(0, -24, 9, Math.PI, 0);
+      ctx.fill();
+
+      // Eye
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(4, -16, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawVictoryConfetti() {
+      for (const c of state.confetti) {
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.rotate(c.rot);
+        ctx.fillStyle = c.color;
+        ctx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
+        ctx.restore();
+      }
+    }
+
+    // Main Render Loop
+    function gameLoop() {
+      updatePhysics();
+
+      if (state.screen === 'playing' || state.screen === 'quiz' || state.screen === 'stageClear') {
+        drawGameplayStage();
+      } else {
+        drawScenicBackdrop();
+        if (state.screen === 'victory') {
+          drawVictoryConfetti();
+        }
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // ----------------------------------------------------------------------------
+    // 10. INPUT & UI EVENT LISTENERS
+    // ----------------------------------------------------------------------------
+    window.addEventListener('keydown', (e) => {
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'Space'].includes(e.code)) {
+        if (state.screen === 'playing') e.preventDefault();
+      }
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
+      if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
+      if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+        triggerJump();
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
+      if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
+    });
+
+    // Touch / Fallback Pad Controls
+    function bindHoldButton(btnId, dirKey) {
+      const btn = document.getElementById(btnId);
+      const start = (e) => { e.preventDefault(); keys[dirKey] = true; btn.classList.add('active'); };
+      const end = (e) => { e.preventDefault(); keys[dirKey] = false; btn.classList.remove('active'); };
+      btn.addEventListener('mousedown', start);
+      btn.addEventListener('mouseup', end);
+      btn.addEventListener('mouseleave', end);
+      btn.addEventListener('touchstart', start, { passive: false });
+      btn.addEventListener('touchend', end);
+    }
+    bindHoldButton('btnTouchLeft', 'left');
+    bindHoldButton('btnTouchRight', 'right');
+
+    document.getElementById('btnTouchJump').addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      triggerJump();
+    });
+    document.getElementById('btnTouchShake').addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      triggerSpecialShake();
+    });
+
+    // Opening Screen -> Registration
+    document.getElementById('btnOpeningPlay').addEventListener('click', () => {
+      sound.startMusic('menu');
+      showScreen('screenRegister', 'register');
+    });
+
+    // Player Registration Form
+    document.getElementById('registerForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nameVal = document.getElementById('inputName').value.trim();
+      const classVal = document.getElementById('inputClass').value.trim();
+      const warnEl = document.getElementById('regWarning');
+
+      if (!nameVal || !classVal) {
+        warnEl.classList.remove('hidden');
+        sound.sfxWrong();
+        return;
+      }
+
+      warnEl.classList.add('hidden');
+      state.playerName = nameVal;
+      state.playerClass = classVal;
+      sound.sfxCorrect();
+
+      document.getElementById('welcomeText').textContent =
+        `Welcome, ${state.playerName}! Ready for an adventure?`;
+      document.getElementById('regSuccessBox').classList.remove('hidden');
+      document.getElementById('btnSubmitReg').textContent = '✅ IDENTITY SAVED';
+    });
+
+    document.getElementById('btnGoMainMenu').addEventListener('click', () => {
+      document.getElementById('menuPlayerBadge').textContent =
+        `EXPLORER: ${state.playerName.toUpperCase()} • CLASS: ${state.playerClass.toUpperCase()}`;
+      showScreen('screenMenu', 'menu');
+    });
+
+    // Main Menu Actions
+    document.getElementById('btnMenuStart').addEventListener('click', () => {
+      document.getElementById('storyPlayerName').textContent = `${state.playerName} (${state.playerClass})`;
+      showScreen('screenStory', 'story');
+    });
+
+    document.getElementById('btnMenuMicrobit').addEventListener('click', () => {
+      showScreen('screenMicrobit', 'microbit');
+    });
+
+    document.getElementById('btnMenuHowTo').addEventListener('click', () => {
+      showScreen('screenHowTo', 'howto');
+    });
+
+    document.getElementById('btnMenuSettings').addEventListener('click', () => {
+      showScreen('screenSettings', 'settings');
+    });
+
+    function syncMusicButtons() {
+      const label = sound.musicOn ? 'ON' : 'OFF';
+      document.getElementById('btnMenuMusic').textContent = `🎵 MUSIC: ${label}`;
+      document.getElementById('btnSettingsMusicToggle').textContent = `🎵 Music: ${label}`;
+      document.getElementById('hudMusicBtn').textContent = `🎵 ${label}`;
+    }
+
+    document.getElementById('btnMenuMusic').addEventListener('click', () => {
+      sound.toggleMusic();
+      syncMusicButtons();
+    });
+
+    // Story Screen
+    document.getElementById('btnStoryBack').addEventListener('click', () => {
+      showScreen('screenMenu', 'menu');
+    });
+    document.getElementById('btnStoryBegin').addEventListener('click', () => {
+      startNewExpedition();
+    });
+
+    // micro:bit Modal
+    document.getElementById('btnMbConnect').addEventListener('click', () => microbit.connect());
+    document.getElementById('btnMbDisconnect').addEventListener('click', () => microbit.disconnect());
+    document.getElementById('btnMbClose').addEventListener('click', () => showScreen('screenMenu', 'menu'));
+
+    document.getElementById('btnCopyMakeCode').addEventListener('click', () => {
+      const code = document.getElementById('makeCodeSnippet').textContent;
+      const ta = document.createElement('textarea');
+      ta.value = code;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const btn = document.getElementById('btnCopyMakeCode');
+      btn.textContent = '✅ Copied!';
+      setTimeout(() => { btn.textContent = '📋 Copy Code'; }, 1800);
+    });
+
+    // How To Play Modal
+    document.getElementById('btnHowToClose').addEventListener('click', () => {
+      showScreen('screenMenu', 'menu');
+    });
+
+    // Settings Modal
+    document.getElementById('volumeSlider').addEventListener('input', (e) => {
+      const val = Number(e.target.value);
+      sound.volume = val / 100;
+      document.getElementById('volumeLabel').textContent = val + '%';
+    });
+
+    document.getElementById('btnSettingsMusicToggle').addEventListener('click', () => {
+      sound.toggleMusic();
+      syncMusicButtons();
+    });
+
+    document.getElementById('btnSettingsSfxToggle').addEventListener('click', () => {
+      sound.sfxOn = !sound.sfxOn;
+      document.getElementById('btnSettingsSfxToggle').textContent = `🔔 SFX: ${sound.sfxOn ? 'ON' : 'OFF'}`;
+    });
+
+    document.getElementById('btnSettingsEditProfile').addEventListener('click', () => {
+      document.getElementById('regSuccessBox').classList.add('hidden');
+      document.getElementById('btnSubmitReg').textContent = '✅ SUBMIT / MULAI';
+      showScreen('screenRegister', 'register');
+    });
+
+    document.getElementById('btnSettingsClose').addEventListener('click', () => {
+      showScreen('screenMenu', 'menu');
+    });
+
+    // HUD Buttons
+    document.getElementById('hudMusicBtn').addEventListener('click', () => {
+      sound.toggleMusic();
+      syncMusicButtons();
+    });
+
+    document.getElementById('hudMenuBtn').addEventListener('click', () => {
+      if (state.timerInterval) clearInterval(state.timerInterval);
+      sound.startMusic('menu');
+      showScreen('screenMenu', 'menu');
+    });
+
+    // Stage Clear -> Next Stage
+    document.getElementById('btnNextStage').addEventListener('click', () => {
+      loadStage(state.stageIndex + 1);
+    });
+
+    // Game Over Buttons
+    document.getElementById('btnGameOverRetry').addEventListener('click', () => {
+      startNewExpedition();
+    });
+    document.getElementById('btnGameOverMenu').addEventListener('click', () => {
+      sound.startMusic('menu');
+      showScreen('screenMenu', 'menu');
+    });
+
+    // Victory Screen Buttons
+    document.getElementById('btnVicPlayAgain').addEventListener('click', () => {
+      document.getElementById('scoreBreakdownBox').classList.add('hidden');
+      startNewExpedition();
+    });
+    document.getElementById('btnVicViewScore').addEventListener('click', () => {
+      document.getElementById('scoreBreakdownBox').classList.toggle('hidden');
+    });
+    document.getElementById('btnVicMainMenu').addEventListener('click', () => {
+      document.getElementById('scoreBreakdownBox').classList.add('hidden');
+      sound.startMusic('menu');
+      showScreen('screenMenu', 'menu');
+    });
+
+    // Start Animation Loop on Load
+    window.onload = function () {
+      resizeCanvas();
+      gameLoop();
+    };
+  </script>
+</body>
+</html>
